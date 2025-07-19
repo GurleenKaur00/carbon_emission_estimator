@@ -19,10 +19,7 @@ page = st.sidebar.radio("Go to", [
     "Compare Models",
     "About"
 ])
-
-# -----------------------------
 # HOME PAGE
-# -----------------------------
 if page == "Home":
     st.title("Carbon Emission Intelligence System")
     st.image("https://media.greenmatters.com/brand-img/ytZ-T9sp7/0x0/what-emissions-do-cars-produce4-1604596615333.jpg")
@@ -81,7 +78,6 @@ if page == "Home":
         st.markdown("- PCA Visualization")
         st.markdown("- Group: High vs Low Emitters")
 
-    # Instructions
     st.info("Use the sidebar to explore pages like **Emission Predictor**, **Recommendation**, **Compare Models**, and **About**.")
     st.success("“The greatest threat to our planet is the belief that someone else will save it.” — Robert Swan")
     col1, col2 = st.columns(2)
@@ -94,17 +90,11 @@ if page == "Home":
 if page == "Emission Predictor":
     st.title("Emission Predictor")
     st.markdown("Predict **CO₂ emissions** using different ML models with smart logistics input.")
-
-    # --------------------------
-    # Load Pretrained Models
-    # --------------------------
+    # Load Models
     rf_model = joblib.load("Notebook/rf_model_pipeline.pkl")
     xgb_model = joblib.load("Notebook/xgboost_pipeline.pkl")
     lr_model = joblib.load("Notebook/linearregression_pipeline.pkl")
-
-    # --------------------------
     # Company → Vehicle → Fuel Mappings
-    # --------------------------
     company_vehicle_fuel_map = {
         "Delhivery": {
             "Bike": ["Electric", "Petrol"],
@@ -192,10 +182,7 @@ if page == "Emission Predictor":
         "Light Truck": "Road", "Medium Truck": "Road", "Heavy Truck": "Road",
         "Cargo Train": "Rail", "Cargo Plane": "Air"
     }
-
-    # --------------------------
     # User Inputs
-    # --------------------------
     company = st.selectbox("Logistics Partner", list(company_vehicle_fuel_map.keys()))
     valid_vehicles = list(company_vehicle_fuel_map[company].keys())
     vehicle_type = st.selectbox("Vehicle Type", valid_vehicles)
@@ -216,10 +203,7 @@ if page == "Emission Predictor":
     engine_norm_type = st.selectbox("Engine Norm Type", ["BS-III", "BS-IV", "BS-VI", "Electric", "Turbofan", "Turboprop", "Jet"])
 
     model_choice = st.radio("Choose Prediction Model", ["Random Forest", "XGBoost", "Linear Regression"])
-
-    # --------------------------
     # Derived Feature Calculator
-    # --------------------------
     def calculate_derived_features(fuel_type, distance, vehicle_capacity, load_capacity, no_of_stops, avg_speed):
         fuel_type_lower = fuel_type.lower()
         fe_dict = {
@@ -256,10 +240,7 @@ if page == "Emission Predictor":
             "load_utilization": round((load_capacity / vehicle_capacity) * 100, 2),
             "load_factor": load_capacity / vehicle_capacity
         }
-
-    # --------------------------
     # Prediction
-    # --------------------------
     if st.button("Predict CO₂ Emission"):
         derived = calculate_derived_features(
             fuel_type, distance, vehicle_capacity, load_capacity, no_of_stops, avg_speed
@@ -349,10 +330,7 @@ if page == "Recommendation":
 
     model = model_map.get(model_used, rf_model)
     load_utilization = round((load_capacity / vehicle_capacity) * 100, 2)
-
-    # -------------------------------
     # Trip Summary
-    # -------------------------------
     st.subheader("Summary of Your Trip")
     st.markdown(f"""
     - **Vehicle Type**: {vehicle_type}  
@@ -361,10 +339,7 @@ if page == "Recommendation":
     - **Load Utilization**: {load_utilization}%  
     - **Predicted CO₂ Emission**: {actual_prediction:.2f} kg  
     """)
-
-    # -------------------------------
     # Alternative Suggestions
-    # -------------------------------
     st.subheader("Alternative Low-Emission Options")
 
     all_combinations = [
@@ -390,8 +365,7 @@ if page == "Recommendation":
             continue
         if vt == "Bike" and distance > 150:
             continue
-
-        # Create a copy of base input as DataFrame
+        
         modified_input = base_input.copy()
         modified_input.loc[:, "vehicle_type"] = vt
         modified_input.loc[:, "fuel_type"] = ft
@@ -407,8 +381,7 @@ if page == "Recommendation":
             results.append((vt, ft, pred))
         except Exception as e:
             continue
-
-    # Sort by predicted emissions
+        
     results.sort(key=lambda x: x[2])
     top_recommendations = results[:3]
 
@@ -418,9 +391,7 @@ if page == "Recommendation":
     else:
         st.info("No better configurations found for this load/distance.")
 
-    # -------------------------------
     # Emission Level Feedback
-    # -------------------------------
     st.subheader(" Emission Level Assessment")
     if actual_prediction < 10:
         st.success(" **Low Emission Trip** – Great job!")
@@ -434,15 +405,8 @@ if page == "Recommendation":
 if page == "Compare Models":
     st.title("Compare ML Models")
     st.markdown("Analyze performance of different models for CO₂ emission prediction.")
-
-  
-
-    # ------------------------------
     # Load Test Data & Models
-    # ------------------------------
     df = pd.read_csv("dataset/carbon_emission_final_engineered.csv")
-
-    # Optional: select only required features
     feature_cols = [
         'logistics_partner', 'vehicle_type', 'mode',
         'distance_in_km_per_route', 'vehicle_age_in_years', 'vehicle_capacity_in_kg', 'load_capacity_in_kg',
@@ -455,17 +419,11 @@ if page == "Compare Models":
 
     X = df[feature_cols]
     y = df['c02_emission_kg']
-
-    # ------------------------------
     # Load Models
-    # ------------------------------
     rf_model = joblib.load("Notebook/rf_model_pipeline.pkl")
     xgb_model = joblib.load("Notebook/xgboost_pipeline.pkl")
     lr_model = joblib.load("Notebook/linearregression_pipeline.pkl")
-
-    # ------------------------------
     # Evaluate Models
-    # ------------------------------
     def evaluate_model(model, X, y):
         y_pred = model.predict(X)
         mae = mean_absolute_error(y, y_pred)
@@ -485,16 +443,10 @@ if page == "Compare Models":
         })
 
     result_df = pd.DataFrame(results)
-
-    # ------------------------------
     # Show Results Table
-    # ------------------------------
     st.subheader("Model Performance Metrics")
     st.dataframe(result_df.set_index("Model"))
-
-    # ------------------------------
     # Plot Comparison
-    # ------------------------------
     st.subheader("Visual Comparison")
 
     fig, ax = plt.subplots(figsize=(8, 5))
@@ -505,3 +457,5 @@ if page == "Compare Models":
     plt.xlabel("Metric")
     plt.grid(True)
     st.pyplot(fig)
+
+    
